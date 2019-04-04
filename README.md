@@ -22,10 +22,10 @@
 
 ## 分支
 
-### [single](https://github.com/gzdzss/gzdzss-oauth2/releases/tag/single) 单一版（无注册中心）
+### [single](https://github.com/gzdzss/gzdzss-oauth2/tree/single) 单一版（无注册中心）
 
 
-### [cluster](https://github.com/gzdzss/gzdzss-oauth2/releases/tag/cluster) 集群版本 （添加注册中心， feign, hystrix）
+### [cluster](https://github.com/gzdzss/gzdzss-oauth2/tree/cluster) 集群版本 （添加注册中心， feign, hystrix）
 
 
 
