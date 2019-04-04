@@ -1,0 +1,15 @@
+server:
+  port: 9999
+
+spring:
+  application:
+    name: order
+
+
+jwt:
+  signingKey: gzdzssSigningKey
+
+
+
+
+

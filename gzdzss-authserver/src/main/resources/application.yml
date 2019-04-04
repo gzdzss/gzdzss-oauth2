@@ -1,0 +1,30 @@
+server:
+  port: 8888
+
+  ## 添加 前缀， 避免冲突
+  servlet:
+    context-path: /auth
+
+
+
+spring:
+  datasource:
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/authserver
+  redis:
+    database: 0
+    host: 127.0.0.1
+    port: 6379
+    password: gzdzssredispassword
+  application:
+    name: authserver
+
+
+jwt:
+  signingKey: gzdzssSigningKey
+
+
+
+

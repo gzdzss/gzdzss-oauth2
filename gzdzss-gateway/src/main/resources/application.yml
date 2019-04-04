@@ -1,0 +1,27 @@
+server:
+  port: 7001
+spring:
+  application:
+    name: gateway
+
+  cloud:
+    gateway:
+      routes:
+      - id: authserver
+        uri: http://localhost:8888
+        predicates:
+        - Path=/auth/**
+      - id: order
+        uri: http://localhost:9999
+        predicates:
+        - Path=/order/**
+        filters:
+        - StripPrefix=1
+
+  redis:
+    database: 0
+    host: 127.0.0.1
+    port: 6379
+    password: gzdzssredispassword
+
+
