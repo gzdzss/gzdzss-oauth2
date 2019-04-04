@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * @author <a href="mailto:zhouyanjie666666@gmail">zyj</a>
+ * @author <a href="mailto:zhouyanjie666666@gmail.com">zyj</a>
  * @date 2019/4/3
  */
 

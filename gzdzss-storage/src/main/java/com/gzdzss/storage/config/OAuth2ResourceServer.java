@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenCo
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 
 /**
- * @author <a href="mailto:zhouyanjie666666@gmail">zyj</a>
+ * @author <a href="mailto:zhouyanjie666666@gmail.com">zyj</a>
  * @date 2019/4/3
  */
 

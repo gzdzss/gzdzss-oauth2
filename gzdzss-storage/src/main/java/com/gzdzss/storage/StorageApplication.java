@@ -6,7 +6,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.netflix.hystrix.EnableHystrix;
 
 /**
- * @author <a href="mailto:zhouyanjie666666@gmail">zyj</a>
+ * @author <a href="mailto:zhouyanjie666666@gmail.com">zyj</a>
  * @date 2019/4/4
  */
 

@@ -12,7 +12,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 /**
- * @author <a href="mailto:zhouyanjie666666@gmail">zyj</a>
+ * @author <a href="mailto:zhouyanjie666666@gmail.com">zyj</a>
  * @date 2019/4/3
  */
 

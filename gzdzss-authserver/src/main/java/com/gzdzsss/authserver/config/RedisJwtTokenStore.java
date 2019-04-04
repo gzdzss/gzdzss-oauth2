@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * 将accessToken存储到redis, 同时生成jwtToken供微服务之间内部调用
  *
- * @author <a href="mailto:zhouyanjie666666@gmail">zyj</a>
+ * @author <a href="mailto:zhouyanjie666666@gmail.com">zyj</a>
  * @date 2019/3/30
  */
 

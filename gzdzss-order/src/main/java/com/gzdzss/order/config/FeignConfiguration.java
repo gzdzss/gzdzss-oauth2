@@ -12,7 +12,7 @@ import java.util.Enumeration;
 /**
  *
  * 转发请求头
- * @author <a href="mailto:zhouyanjie666666@gmail">zyj</a>
+ * @author <a href="mailto:zhouyanjie666666@gmail.com">zyj</a>
  * @date 2019/4/4
  */
 
