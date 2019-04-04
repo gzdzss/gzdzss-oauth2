@@ -19,10 +19,10 @@
 
 ## 分支
 
-### [1.0.0-RELEASE](https://github.com/gzdzss/gzdzss-oauth2/tree/1.0.0-RELEASE) 单一版（无注册中心）
+### [1.0.0.RELEASE](https://github.com/gzdzss/gzdzss-oauth2/tree/1.0.0.RELEASE) 单一版（无注册中心）
 
 
-### [2.0.0-RELEASE](https://github.com/gzdzss/gzdzss-oauth2/tree/2.0.0-RELEASE) 集群版本 （添加注册中心， feign, hystrix）
+### [2.0.0.RELEASE](https://github.com/gzdzss/gzdzss-oauth2/tree/2.0.0.RELEASE) 集群版本 （添加注册中心， feign, hystrix）
 
 
 
