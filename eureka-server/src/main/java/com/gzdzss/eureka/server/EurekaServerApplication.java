@@ -1,20 +1,19 @@
-package com.gzdzss.gateway;
+package com.gzdzss.eureka.server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
 
 /**
  * @author <a href="mailto:zhouyanjie666666@gmail">zyj</a>
- * @date 2019/4/3
+ * @date 2019/4/4
  */
 
 @SpringBootApplication
-@EnableDiscoveryClient
-public class GatewayApplication {
-
+@EnableEurekaServer
+public class EurekaServerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(GatewayApplication.class, args);
+        SpringApplication.run(EurekaServerApplication.class, args);
     }
 }

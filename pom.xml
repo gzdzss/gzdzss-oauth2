@@ -10,7 +10,9 @@
 		<module>gzdzss-authserver</module>
         <module>gzdzss-gateway</module>
         <module>gzdzss-order</module>
-    </modules>
+        <module>eureka-server</module>
+		<module>gzdzss-storage</module>
+	</modules>
 	<name>gzdzss-oauth2</name>
 	<packaging>pom</packaging>
 	<description>oauth2整合</description>
@@ -36,6 +38,13 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 		</dependency>
+
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
 
 	</dependencies>
 

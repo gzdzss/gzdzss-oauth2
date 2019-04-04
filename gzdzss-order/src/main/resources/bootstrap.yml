@@ -1,0 +1,10 @@
+## 全局 ribbon 超时时间
+ribbon:
+  ConnectTimeout: 1000
+  ReadTimeout: 1000
+
+# feign 使用Ribbon实现， 所以配置 ribbon的超时时间
+storage:
+  ribbon:
+    ConnectTimeout: 2000
+    ReadTimeout: 6000

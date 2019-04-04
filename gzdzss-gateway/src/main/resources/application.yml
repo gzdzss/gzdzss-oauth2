@@ -8,13 +8,19 @@ spring:
     gateway:
       routes:
       - id: authserver
-        uri: http://localhost:8888
+        uri: lb://authserver
         predicates:
         - Path=/auth/**
       - id: order
-        uri: http://localhost:9999
+        uri: lb://order
         predicates:
         - Path=/order/**
+        filters:
+        - StripPrefix=1
+      - id: storage
+        uri: lb://storage
+        predicates:
+        - Path=/storage/**
         filters:
         - StripPrefix=1
 
@@ -25,3 +31,7 @@ spring:
     password: gzdzssredispassword
 
 
+eureka:
+  client:
+    service-url:
+      defaultZone:  http://localhost:8761/eureka

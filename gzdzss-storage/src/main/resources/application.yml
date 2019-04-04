@@ -1,9 +1,9 @@
 server:
-  port: 9999
+  port: 9899
 
 spring:
   application:
-    name: order
+    name: storage
 
 
 jwt:

@@ -1,23 +1,21 @@
-package com.gzdzss.order;
+package com.gzdzss.storage;
 
-import com.gzdzss.order.api.StorageApi;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.cloud.netflix.hystrix.EnableHystrix;
 
 /**
  * @author <a href="mailto:zhouyanjie666666@gmail">zyj</a>
- * @date 2019/4/3
+ * @date 2019/4/4
  */
 
-
+@EnableHystrix
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableFeignClients(clients = StorageApi.class)
-public class OrderApplication {
+public class StorageApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(OrderApplication.class, args);
+        SpringApplication.run(StorageApplication.class, args);
     }
 }

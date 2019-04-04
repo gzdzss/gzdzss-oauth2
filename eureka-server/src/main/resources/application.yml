@@ -1,0 +1,22 @@
+server:
+  port: 8761
+
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    ## Spring Cloud Eureka 服务器作为注册中心
+    ## 通常情况下，不需要再注册到其他注册中心去
+    ## 同时，它也不需要获取客户端信息
+    ### 取消向注册中心注册
+    register-with-eureka: false
+    ### 取消向注册中心获取注册信息（服务、实例信息）
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka
+

@@ -1,0 +1,10 @@
+
+
+
+hystrix:
+  command:
+    default:
+      execution:
+        ## 设置隔离级别，  否则  feign 和 header 无法带过来
+        isolation:
+          strategy: SEMAPHORE
