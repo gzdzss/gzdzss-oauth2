@@ -11,7 +11,9 @@
 
 
 
+##架构图
 
+![image](https://github.com/gzdzss/gzdzss-oauth2/raw/master/oauth2.png)
 
 
 
