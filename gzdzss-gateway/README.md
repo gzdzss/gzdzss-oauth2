@@ -10,10 +10,12 @@
 http://localhost:7001/auth 
 
 
- 
 ##2.代理订单服务
 
-http://localhost:7001/order 
+订单：
+http://localhost:7001/order
+
+
 
 ## 2.1 获取订单列表
 
@@ -35,5 +37,9 @@ Headers: Authorization: Bearer 065f3fa8-41be-434d-92c7-8b1fa63bc004
     "scope": "xxx"
 }
 ```
+
+## 3代理库存
+
+http://localhost:7001/storage
 
 
