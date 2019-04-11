@@ -30,7 +30,7 @@ public class OrderController {
     @PreAuthorize("#oauth2.hasScope('login') and #oauth2.hasScope('userinfo')")
     @GetMapping(value = "/order/list")
     public ResponseEntity list() {
-        return ResponseEntity.ok().body("list");
+        return ResponseEntity.ok().body("list" + RandomStringUtils.randomNumeric(8));
     }
 
 
