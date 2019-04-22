@@ -5,8 +5,6 @@ server:
   servlet:
     context-path: /auth
 
-
-
 spring:
   datasource:
     username: root
@@ -21,9 +19,10 @@ spring:
   application:
     name: authserver
 
-
 jwt:
   signingKey: gzdzssSigningKey
+  ##auth token有效期
+  authExpiresInSeconds: 43200
 
 
 eureka:

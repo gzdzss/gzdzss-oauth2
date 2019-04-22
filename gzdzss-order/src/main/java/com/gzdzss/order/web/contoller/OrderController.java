@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -26,6 +27,12 @@ public class OrderController {
 
     @Autowired
     private StorageApi storageApi;
+
+    @GetMapping(value = "/order/test")
+    public ResponseEntity test(OAuth2Authentication oAuth2Authentication) {
+        return ResponseEntity.ok().body(oAuth2Authentication.getOAuth2Request().getScope());
+    }
+
 
     @PreAuthorize("#oauth2.hasScope('login') and #oauth2.hasScope('userinfo')")
     @GetMapping(value = "/order/list")
@@ -47,7 +54,7 @@ public class OrderController {
         log.info("{}下单， 扣减库存", authentication.getName());
         //扣减库存
         String resp = storageApi.stock(Integer.valueOf(RandomStringUtils.randomNumeric(1)));
-       return ResponseEntity.ok().body(resp);
+        return ResponseEntity.ok().body(resp);
     }
 
 }

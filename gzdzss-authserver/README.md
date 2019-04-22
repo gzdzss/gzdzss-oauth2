@@ -64,6 +64,7 @@ http://localhost:8888/auth/user/register     例： user/123456
 
 ### 1.4.查看客户端
 http://localhost:8888/auth/client/list
+http://localhost:8888/auth/client/detail/{id}
 
 ### 1.5.注册客户端
 http://localhost:8888/auth/client/register  例如;  aaaaa  bbbbb  https://www.baidu.com/

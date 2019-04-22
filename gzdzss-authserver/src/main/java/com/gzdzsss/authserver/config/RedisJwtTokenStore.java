@@ -24,7 +24,7 @@ import java.util.Map;
 @Component
 public class RedisJwtTokenStore extends RedisTokenStore {
 
-    private static final String JWT_TO_ACCESS = "jwt_to_access:";
+
 
     private RedisConnectionFactory connectionFactory;
 
@@ -62,7 +62,7 @@ public class RedisJwtTokenStore extends RedisTokenStore {
 
 
     private byte[] serializeJwtKey(String tokenValue) {
-        return serializationStrategy.serialize(JWT_TO_ACCESS + tokenValue);
+        return serializationStrategy.serialize(JwtConstant.JWT_TO_ACCESS + tokenValue);
     }
 
 

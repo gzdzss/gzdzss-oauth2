@@ -6,9 +6,17 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.jwt.crypto.sign.MacSigner;
 import org.springframework.security.jwt.crypto.sign.Signer;
+import org.springframework.security.jwt.crypto.sign.SignerVerifier;
 import org.springframework.security.oauth2.config.annotation.builders.ClientDetailsServiceBuilder;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
+import org.springframework.security.oauth2.provider.OAuth2RequestValidator;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.JdbcAuthorizationCodeServices;
+import org.springframework.security.oauth2.provider.endpoint.DefaultRedirectResolver;
+import org.springframework.security.oauth2.provider.endpoint.RedirectResolver;
+import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestValidator;
+import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.redis.JdkSerializationStrategy;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStoreSerializationStrategy;
@@ -43,19 +51,30 @@ public class ConfigBeanInit {
 
     //授权码管理的方法
     @Bean
-    public AuthorizationCodeServices authorizationCodeServices(DataSource dataSource){
+    public AuthorizationCodeServices authorizationCodeServices(DataSource dataSource) {
         return new JdbcAuthorizationCodeServices(dataSource);
+    }
+
+    @Bean
+    public AuthorizationServerTokenServices authorizationServerTokenServices(ClientDetailsService clientDetailsService, RedisJwtTokenStore redisJwtTokenStore) {
+        DefaultTokenServices defaultTokenServices =  new DefaultTokenServices();
+        defaultTokenServices.setClientDetailsService(clientDetailsService);
+        defaultTokenServices.setTokenStore(redisJwtTokenStore);
+        return defaultTokenServices;
     }
 
 
     //客户端管理的方法
     @Bean
     public ClientDetailsServiceBuilder clientDetailsServiceBuilder(DataSource dataSource, PasswordEncoder passwordEncoder) throws Exception {
-         return new ClientDetailsServiceBuilder().jdbc().dataSource(dataSource).passwordEncoder(passwordEncoder);
+        return new ClientDetailsServiceBuilder().jdbc().dataSource(dataSource).passwordEncoder(passwordEncoder);
     }
 
 
-
+    @Bean
+    public RedirectResolver redirectResolver() {
+        return new DefaultRedirectResolver();
+    }
 
 
     //Redis序列化的方法
@@ -65,10 +84,15 @@ public class ConfigBeanInit {
     }
 
 
-
     //用于jwtToken的签名
     @Bean
     public Signer signer(@Value("${jwt.signingKey}") String signingKey) {
+        return new MacSigner(signingKey);
+    }
+
+
+    @Bean
+    private SignerVerifier signerVerifier(@Value("${jwt.signingKey}") String signingKey) {
         return new MacSigner(signingKey);
     }
 
@@ -77,6 +101,12 @@ public class ConfigBeanInit {
     @Bean
     public JwtAccessTokenConverter jwtAccessTokenConverter() {
         return new JwtAccessTokenConverter();
+    }
+
+
+    @Bean
+    public OAuth2RequestValidator oAuth2RequestValidator() {
+        return new DefaultOAuth2RequestValidator();
     }
 
 
