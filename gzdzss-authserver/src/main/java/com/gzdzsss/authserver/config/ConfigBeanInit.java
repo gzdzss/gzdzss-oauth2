@@ -60,6 +60,7 @@ public class ConfigBeanInit {
         DefaultTokenServices defaultTokenServices =  new DefaultTokenServices();
         defaultTokenServices.setClientDetailsService(clientDetailsService);
         defaultTokenServices.setTokenStore(redisJwtTokenStore);
+        defaultTokenServices.setReuseRefreshToken(true);
         return defaultTokenServices;
     }
 

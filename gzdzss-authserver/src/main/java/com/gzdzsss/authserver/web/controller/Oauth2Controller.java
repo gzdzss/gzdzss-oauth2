@@ -107,18 +107,19 @@ public class Oauth2Controller {
             OAuth2AccessToken accessToken = defaultTokenServices.createAccessToken(combinedAuth);
             resp.put("access_token", accessToken.getValue());
             resp.put("token_type", accessToken.getTokenType());
+            resp.put("refresh_token", accessToken.getRefreshToken().getValue());
             Date expiration = accessToken.getExpiration();
             if (expiration != null) {
-                long expires_in = (expiration.getTime() - System.currentTimeMillis()) / 1000;
-                resp.put("expires_in", expires_in);
+                long expiresIn = (expiration.getTime() - System.currentTimeMillis()) / 1000;
+                resp.put("expires_in", expiresIn);
             }
             resp.put("scope", OAuth2Utils.formatParameterList(accessToken.getScope()));
         } else if ("code".equals(responseType)) {
             String code = authorizationCodeServices.createAuthorizationCode(combinedAuth);
             resp.put("code", code);
         }
-        resp.put("responseType", responseType);
-        resp.put("redirectUri", redirectUri);
+        resp.put("response_type", responseType);
+        resp.put("redirect_uri", redirectUri);
         resp.put("state", state);
         return ResponseEntity.ok(resp);
     }
