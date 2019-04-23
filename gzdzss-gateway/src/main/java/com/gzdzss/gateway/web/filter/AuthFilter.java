@@ -47,13 +47,13 @@ public class AuthFilter implements GlobalFilter, Ordered {
                 ServerWebExchange build = exchange.mutate().request(host).build();
                 return chain.filter(build);
             } else {
-                //过期提示:  statusCode: 403 ,  body:  token已过期
+                //过期提示:  statusCode: 401 ,  body:  token已过期
                 ServerHttpResponse response = exchange.getResponse();
                 JSONObject respJson = new JSONObject();
                 respJson.put("error_description", "token已过期");
                 DataBuffer buffer = response.bufferFactory().wrap(respJson.toJSONString().getBytes("UTF-8"));
                 response.getHeaders().setContentType(MediaType.APPLICATION_JSON_UTF8);
-                response.setStatusCode(HttpStatus.FORBIDDEN);
+                response.setStatusCode(HttpStatus.UNAUTHORIZED);
                 return response.writeWith(Mono.just(buffer));
             }
         }
