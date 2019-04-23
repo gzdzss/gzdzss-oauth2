@@ -1,9 +1,11 @@
 package com.gzdzsss.authserver.config;
 
 import com.alibaba.fastjson.JSONObject;
+import com.gzdzsss.authserver.config.jwt.JwtAuthentication;
 import com.gzdzsss.authserver.config.jwt.JwtAuthenticationFilter;
 import com.gzdzsss.authserver.config.jwt.JwtConstant;
 import com.gzdzsss.authserver.config.jwt.JwtUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.jwt.crypto.sign.SignerVerifier;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStoreSerializationStrategy;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -59,6 +62,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private RedisConnectionFactory connectionFactory;
 
     @Autowired
+    private DefaultTokenServices defaultTokenServices;
+
+    @Autowired
     private RedisTokenStoreSerializationStrategy serializationStrategy;
 
     @Override
@@ -84,6 +90,19 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http.authorizeRequests().antMatchers("/user/register").permitAll().anyRequest().authenticated().and().logout().logoutSuccessHandler(new LogoutSuccessHandler() {
             @Override
             public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+                JwtAuthentication jwtAuthentication = JwtUtils.decodeToken(request, signerVerifier);
+                if (jwtAuthentication != null) {
+                    String accessToken = jwtAuthentication.getAccessToken();
+                    String clientId = jwtAuthentication.getClientId();
+                    if (StringUtils.isNotBlank(accessToken)) {
+                        //有 client 表示为 oauth2登录
+                        if (StringUtils.isNotBlank(clientId)) {
+                            defaultTokenServices.revokeToken(accessToken);
+                        } else {
+                            removeAccessToken(accessToken);
+                        }
+                    }
+                }
             }
         }).and().formLogin()
                 .failureHandler(new AuthenticationFailureHandler() {
@@ -98,7 +117,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             @Override
             public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
                 String accessToken = UUID.randomUUID().toString();
-                String jwtToken = JwtUtils.encodeToken(authentication, signerVerifier);
+                String jwtToken = JwtUtils.encodeToken(accessToken, authentication, signerVerifier);
                 storeJwtToken(accessToken, jwtToken);
                 JSONObject respJson = new JSONObject();
                 respJson.put("access_token", accessToken);
@@ -138,6 +157,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         byte[] val = serializationStrategy.serialize(jwtToken);
         connectionFactory.getConnection().set(key, val);
         connectionFactory.getConnection().expire(key, authExpiresInSeconds);
+    }
+
+
+    private void removeAccessToken(String accessToken) {
+        byte[] key = serializeJwtKey(accessToken);
+        connectionFactory.getConnection().del(key);
     }
 
     private byte[] serializeJwtKey(String tokenValue) {

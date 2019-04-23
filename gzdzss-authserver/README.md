@@ -60,14 +60,14 @@ CREATE TABLE `oauth_client_details` (
 
 
 ### 1.3注册用户：
-http://localhost:8888/auth/user/register     例： user/123456
+POST: http://localhost:8888/auth/user/register     例： user/123456
 
 ### 1.4.查看客户端
-http://localhost:8888/auth/client/list
-http://localhost:8888/auth/client/detail/{id}
+GET: http://localhost:8888/auth/client/list
+GET: http://localhost:8888/auth/client/detail/{id}
 
 ### 1.5.注册客户端
-http://localhost:8888/auth/client/register  例如;  aaaaa  bbbbb  https://www.baidu.com/
+POST：http://localhost:8888/auth/client/register  例如;  aaaaa  bbbbb  https://www.baidu.com/
 
 
 

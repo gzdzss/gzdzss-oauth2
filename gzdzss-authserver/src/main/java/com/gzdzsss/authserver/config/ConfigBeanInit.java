@@ -15,7 +15,6 @@ import org.springframework.security.oauth2.provider.code.JdbcAuthorizationCodeSe
 import org.springframework.security.oauth2.provider.endpoint.DefaultRedirectResolver;
 import org.springframework.security.oauth2.provider.endpoint.RedirectResolver;
 import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestValidator;
-import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.redis.JdkSerializationStrategy;
@@ -57,7 +56,7 @@ public class ConfigBeanInit {
 
     //认证token服务
     @Bean
-    public AuthorizationServerTokenServices authorizationServerTokenServices(ClientDetailsService clientDetailsService, RedisJwtTokenStore redisJwtTokenStore) {
+    public DefaultTokenServices defaultTokenServices(ClientDetailsService clientDetailsService, RedisJwtTokenStore redisJwtTokenStore) {
         DefaultTokenServices defaultTokenServices =  new DefaultTokenServices();
         defaultTokenServices.setClientDetailsService(clientDetailsService);
         defaultTokenServices.setTokenStore(redisJwtTokenStore);

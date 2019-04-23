@@ -27,14 +27,9 @@ public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
         this.signerVerifier = signerVerifier;
     }
 
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        String header = request.getHeader("authorization");
-        if (header != null && header.toLowerCase().startsWith("bearer ")) {
-            String token = header.substring(7);
-            SecurityContextHolder.getContext().setAuthentication(JwtUtils.decodeToken(token, signerVerifier));
-        }
+        SecurityContextHolder.getContext().setAuthentication(JwtUtils.decodeToken(request, signerVerifier));
         chain.doFilter(request, response);
     }
 }

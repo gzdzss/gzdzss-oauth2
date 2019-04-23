@@ -1,5 +1,6 @@
 package com.gzdzsss.authserver.config.jwt;
 
+import lombok.Getter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -14,9 +15,17 @@ public class JwtAuthentication extends AbstractAuthenticationToken {
 
     private final Object principal;
 
-    public JwtAuthentication(Object principal, Collection<? extends GrantedAuthority> authorities) {
+    @Getter
+    private final String accessToken;
+
+    @Getter
+    private final String clientId;
+
+    public JwtAuthentication(String accessToken, String clientId, Object principal, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
+        this.accessToken = accessToken;
         this.principal = principal;
+        this.clientId = clientId;
         super.setAuthenticated(true);
     }
 

@@ -2,6 +2,7 @@ package com.gzdzsss.authserver.config;
 
 import com.alibaba.fastjson.JSON;
 import com.gzdzsss.authserver.config.jwt.JwtConstant;
+import com.gzdzsss.authserver.config.jwt.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.security.jwt.JwtHelper;
@@ -24,8 +25,6 @@ import java.util.Map;
 
 @Component
 public class RedisJwtTokenStore extends RedisTokenStore {
-
-
 
     private RedisConnectionFactory connectionFactory;
 
@@ -72,7 +71,10 @@ public class RedisJwtTokenStore extends RedisTokenStore {
 
         Map<String, ?> convertAccessToken = jwtAccessTokenConverter.convertAccessToken(token, authentication);
 
-        String jwtToken = JwtHelper.encode(JSON.toJSONString(convertAccessToken), signer).getEncoded();
+        Map<String, Object> map = (Map<String, Object>) convertAccessToken;
+        map.put(JwtUtils.ACCESS_TOKEN, token.getValue());
+
+        String jwtToken = JwtHelper.encode(JSON.toJSONString(map), signer).getEncoded();
 
         byte[] val = serializationStrategy.serialize(jwtToken);
 

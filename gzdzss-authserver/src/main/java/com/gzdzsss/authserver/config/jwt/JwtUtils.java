@@ -9,6 +9,7 @@ import org.springframework.security.jwt.Jwt;
 import org.springframework.security.jwt.JwtHelper;
 import org.springframework.security.jwt.crypto.sign.SignerVerifier;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,10 +23,13 @@ public class JwtUtils {
 
     private static final String USERNAME = "user_name";
     private static final String AUTHORITIES = "authorities";
+    public static final String ACCESS_TOKEN = "access_token";
+    public static final String CLIENT_ID = "client_id";
 
 
-    public static String encodeToken(Authentication authentication, SignerVerifier signerVerifier) {
+    public static String encodeToken(String accessToken, Authentication authentication, SignerVerifier signerVerifier) {
         Map<String, Object> content = new HashMap<>();
+        content.put(ACCESS_TOKEN, accessToken);
         content.put(USERNAME, authentication.getName());
         if (authentication.getAuthorities() != null && !authentication.getAuthorities().isEmpty()) {
             content.put(AUTHORITIES, AuthorityUtils.authorityListToSet(authentication.getAuthorities()));
@@ -35,7 +39,7 @@ public class JwtUtils {
     }
 
 
-    public static Authentication decodeToken(String token, SignerVerifier signerVerifier) {
+    public static JwtAuthentication decodeToken(String token, SignerVerifier signerVerifier) {
         Jwt jwt = JwtHelper.decodeAndVerify(token, signerVerifier);
 
         JSONObject claims = JSON.parseObject(jwt.getClaims());
@@ -44,7 +48,21 @@ public class JwtUtils {
 
         List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList(claims.getString(AUTHORITIES));
 
-        return new JwtAuthentication(username, authorities);
+        String accessToken = claims.getString(ACCESS_TOKEN);
+
+        String clientId = claims.getString(CLIENT_ID);
+
+        return new JwtAuthentication(accessToken, clientId, username, authorities);
+    }
+
+
+    public static JwtAuthentication decodeToken(HttpServletRequest request, SignerVerifier signerVerifier) {
+        String header = request.getHeader("authorization");
+        if (header != null && header.toLowerCase().startsWith("bearer ")) {
+            String token = header.substring(7);
+            return JwtUtils.decodeToken(token, signerVerifier);
+        }
+        return null;
     }
 
 }

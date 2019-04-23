@@ -13,7 +13,7 @@ import org.springframework.security.oauth2.common.util.OAuth2Utils;
 import org.springframework.security.oauth2.provider.*;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.endpoint.RedirectResolver;
-import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -45,7 +45,7 @@ public class Oauth2Controller {
     private AuthorizationCodeServices authorizationCodeServices;
 
     @Autowired
-    private AuthorizationServerTokenServices authorizationServerTokenServices;
+    private DefaultTokenServices defaultTokenServices;
 
     @RequestMapping(value = "/oauth2/authorize", method = RequestMethod.GET)
     public ResponseEntity authorize(@RequestParam(value = OAuth2Utils.CLIENT_ID) String clientId,
@@ -59,8 +59,9 @@ public class Oauth2Controller {
         resp.put(OAuth2Utils.REDIRECT_URI, authorizeVO.getResolvedRedirect());
         resp.put(OAuth2Utils.SCOPE, authorizeVO.getClientDetails().getScope());
         return ResponseEntity.ok(resp);
-
     }
+
+
 
 
     private AuthorizeVO validate(Authentication authentication, String responseType, String clientId, String redirectUri) {
@@ -103,7 +104,7 @@ public class Oauth2Controller {
         Map<String, Object> resp = new HashMap<>();
 
         if ("token".equals(responseType)) {
-            OAuth2AccessToken accessToken = authorizationServerTokenServices.createAccessToken(combinedAuth);
+            OAuth2AccessToken accessToken = defaultTokenServices.createAccessToken(combinedAuth);
             resp.put("access_token", accessToken.getValue());
             resp.put("token_type", accessToken.getTokenType());
             Date expiration = accessToken.getExpiration();
@@ -112,11 +113,11 @@ public class Oauth2Controller {
                 resp.put("expires_in", expires_in);
             }
             resp.put("scope", OAuth2Utils.formatParameterList(accessToken.getScope()));
-
         } else if ("code".equals(responseType)) {
             String code = authorizationCodeServices.createAuthorizationCode(combinedAuth);
             resp.put("code", code);
         }
+        resp.put("responseType", responseType);
         resp.put("redirectUri", redirectUri);
         resp.put("state", state);
         return ResponseEntity.ok(resp);
