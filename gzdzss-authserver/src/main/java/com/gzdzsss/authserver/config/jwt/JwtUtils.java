@@ -1,4 +1,4 @@
-package com.gzdzsss.authserver.config;
+package com.gzdzsss.authserver.config.jwt;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;

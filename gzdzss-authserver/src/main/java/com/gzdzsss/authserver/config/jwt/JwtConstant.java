@@ -1,4 +1,4 @@
-package com.gzdzsss.authserver.config;
+package com.gzdzsss.authserver.config.jwt;
 
 /**
  * @author <a href="mailto:zhouyanjie666666@gmail.com">zyj</a>

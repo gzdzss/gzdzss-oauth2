@@ -55,6 +55,7 @@ public class ConfigBeanInit {
         return new JdbcAuthorizationCodeServices(dataSource);
     }
 
+    //认证token服务
     @Bean
     public AuthorizationServerTokenServices authorizationServerTokenServices(ClientDetailsService clientDetailsService, RedisJwtTokenStore redisJwtTokenStore) {
         DefaultTokenServices defaultTokenServices =  new DefaultTokenServices();
@@ -71,6 +72,7 @@ public class ConfigBeanInit {
     }
 
 
+    //重定向解析器
     @Bean
     public RedirectResolver redirectResolver() {
         return new DefaultRedirectResolver();

@@ -1,6 +1,7 @@
 package com.gzdzsss.authserver.config;
 
 import com.alibaba.fastjson.JSON;
+import com.gzdzsss.authserver.config.jwt.JwtConstant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.security.jwt.JwtHelper;

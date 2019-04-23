@@ -1,4 +1,4 @@
-package com.gzdzsss.authserver.config;
+package com.gzdzsss.authserver.config.jwt;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;

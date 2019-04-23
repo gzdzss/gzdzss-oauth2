@@ -1,6 +1,9 @@
 package com.gzdzsss.authserver.config;
 
 import com.alibaba.fastjson.JSONObject;
+import com.gzdzsss.authserver.config.jwt.JwtAuthenticationFilter;
+import com.gzdzsss.authserver.config.jwt.JwtConstant;
+import com.gzdzsss.authserver.config.jwt.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -77,7 +80,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable();
         //禁用session
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-        http.addFilter(new JWTAuthenticationFilter(authenticationManagerBean(), signerVerifier));
+        http.addFilter(new JwtAuthenticationFilter(authenticationManagerBean(), signerVerifier));
         http.authorizeRequests().antMatchers("/user/register").permitAll().anyRequest().authenticated().and().logout().logoutSuccessHandler(new LogoutSuccessHandler() {
             @Override
             public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {

@@ -1,5 +1,7 @@
 package com.gzdzss.gateway.web.filter;
 
+import com.alibaba.fastjson.JSONObject;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -15,8 +17,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.nio.charset.StandardCharsets;
-
 /**
  * @author <a href="mailto:zhouyanjie666666@gmail.com">zyj</a>
  * @date 2019/4/3
@@ -27,12 +27,12 @@ public class AuthFilter implements GlobalFilter, Ordered {
 
     private static final String JWT_TO_ACCESS = "jwt_to_access:";
 
-    private static final byte[] TOKEN_TIMEOUT_MSG= "token已过期".getBytes(StandardCharsets.UTF_8);
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
     @Override
+    @SneakyThrows
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         HttpHeaders headers = exchange.getRequest().getHeaders();
         String token = headers.getFirst(HttpHeaders.AUTHORIZATION);
@@ -47,11 +47,13 @@ public class AuthFilter implements GlobalFilter, Ordered {
                 ServerWebExchange build = exchange.mutate().request(host).build();
                 return chain.filter(build);
             } else {
-                //过期提示:  statusCode: 401 ,  body:  token已过期
+                //过期提示:  statusCode: 403 ,  body:  token已过期
                 ServerHttpResponse response = exchange.getResponse();
-                DataBuffer buffer = response.bufferFactory().wrap(TOKEN_TIMEOUT_MSG);
+                JSONObject respJson = new JSONObject();
+                respJson.put("error_description", "token已过期");
+                DataBuffer buffer = response.bufferFactory().wrap(respJson.toJSONString().getBytes("UTF-8"));
                 response.getHeaders().setContentType(MediaType.APPLICATION_JSON_UTF8);
-                response.setStatusCode(HttpStatus.UNAUTHORIZED);
+                response.setStatusCode(HttpStatus.FORBIDDEN);
                 return response.writeWith(Mono.just(buffer));
             }
         }

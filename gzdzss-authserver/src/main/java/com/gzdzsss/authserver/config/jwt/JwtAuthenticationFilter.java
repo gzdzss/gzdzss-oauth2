@@ -1,4 +1,4 @@
-package com.gzdzsss.authserver.config;
+package com.gzdzsss.authserver.config.jwt;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,12 +17,12 @@ import java.io.IOException;
  */
 
 
-public class JWTAuthenticationFilter extends BasicAuthenticationFilter {
+public class JwtAuthenticationFilter extends BasicAuthenticationFilter {
 
 
     private SignerVerifier signerVerifier;
 
-    public JWTAuthenticationFilter(AuthenticationManager authenticationManager, SignerVerifier signerVerifier) {
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, SignerVerifier signerVerifier) {
         super(authenticationManager);
         this.signerVerifier = signerVerifier;
     }
