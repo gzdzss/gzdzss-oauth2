@@ -10,7 +10,7 @@ ENV="dev"
 #JVM参数
 JVM_OPTS="-Dname=$SpringBoot -Dspring.profiles.active=$ENV  -Xms128m -Xmx512m"
 APP_HOME=`pwd`
-LOG_PATH=/data/applog/eureka.log
+LOG_PATH=/data/applog/order.log
 
 if [ "$1" = "" ];
 then
