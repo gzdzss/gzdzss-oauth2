@@ -1,17 +1,21 @@
 package com.gzdzsss.authserver.web.controller;
 
 
+import com.gzdzss.security.GzdzssUserDetails;
+import com.gzdzss.security.util.GzdzssSecurityUtils;
+import com.gzdzsss.authserver.config.oauth.RedisJwtTokenStore;
+import com.gzdzsss.authserver.config.security.UserDetailsServiceImpl;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.jwt.crypto.sign.MacSigner;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.common.exceptions.RedirectMismatchException;
 import org.springframework.security.oauth2.common.exceptions.UnsupportedResponseTypeException;
@@ -26,10 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author <a href="mailto:zhouyanjie666666@gmail.com">zyj</a>
@@ -57,10 +58,18 @@ public class Oauth2Controller {
     public RestTemplate restTemplate;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private MacSigner macSigner;
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private RedisJwtTokenStore redisJwtTokenStore;
+
+
+    @Autowired
+    private UserDetailsServiceImpl userDetailsService;
+
+    @Value("${jwt.authExpiresInSeconds}")
+    private int authExpiresInSeconds;
+
 
     @RequestMapping(value = "/oauth2/authorize", method = RequestMethod.GET)
     public ResponseEntity authorize(@RequestParam(value = OAuth2Utils.CLIENT_ID) String clientId,
@@ -140,47 +149,44 @@ public class Oauth2Controller {
 
     @RequestMapping(value = "/oauth2/github", method = RequestMethod.GET)
     public ResponseEntity github(@RequestParam(value = "code") String code) {
-            RestTemplate restTemplate = new RestTemplate();
-            String user = "3454267794e0ec293968";
-            String password = "f038263d3e2a199c0c639008b8629a8ae9a5fe82";
-            String userMsg = user + ":" + password;
-            String base64UserMsg = Base64.encodeBase64String(userMsg.getBytes());
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("Authorization", "Basic " + base64UserMsg);
-            HttpEntity httpEntity = new HttpEntity(headers);
-            ResponseEntity<Map> resp = restTemplate.exchange("https://github.com/login/oauth/access_token?code="+code, HttpMethod.GET, httpEntity, Map.class);
-            Map<String, String> map = resp.getBody();
-            String error = map.get("error");
-            if (StringUtils.isNotBlank(error)) {
-                return ResponseEntity.badRequest().body(map);
+        RestTemplate restTemplate = new RestTemplate();
+        String user = "3454267794e0ec293968";
+        String password = "f038263d3e2a199c0c639008b8629a8ae9a5fe82";
+        String userMsg = user + ":" + password;
+        String base64UserMsg = Base64.encodeBase64String(userMsg.getBytes());
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Basic " + base64UserMsg);
+        HttpEntity httpEntity = new HttpEntity(headers);
+        ResponseEntity<Map> resp = restTemplate.exchange("https://github.com/login/oauth/access_token?code=" + code, HttpMethod.GET, httpEntity, Map.class);
+        Map<String, String> map = resp.getBody();
+        String error = map.get("error");
+        if (StringUtils.isNotBlank(error)) {
+            return ResponseEntity.badRequest().body(map);
+        } else {
+            String accessToken = map.get("access_token");
+            HttpHeaders userHeaders = new HttpHeaders();
+            userHeaders.add("Authorization", "token " + accessToken);
+            HttpEntity userEntity = new HttpEntity(userHeaders);
+            ResponseEntity<Map> respUser = restTemplate.exchange("https://api.github.com/user", HttpMethod.GET, userEntity, Map.class);
+            if (respUser.getStatusCode() == HttpStatus.OK) {
+                Map<String, Object> userMap = respUser.getBody();
+                String id = userMap.get("id").toString();
+                String avatarUrl = userMap.get("avatar_url").toString();
+                String name = userMap.get("name").toString();
+                GzdzssUserDetails userDetails = userDetailsService.loadUserByGithubId(id, accessToken, avatarUrl, name);
+                String token = UUID.randomUUID().toString();
+                AnonymousAuthenticationToken authenticationToken = new AnonymousAuthenticationToken(token, userDetails, userDetails.getAuthorities());
+                String jwtToken = GzdzssSecurityUtils.encodeToken(authenticationToken, authExpiresInSeconds, macSigner);
+                redisJwtTokenStore.storeJwtToken(token, jwtToken, authExpiresInSeconds);
+                Map<String, Object> respMap = new HashMap();
+                respMap.put("access_token", token);
+                respMap.put("token_type", "bearer");
+                respMap.put("expires_in", authExpiresInSeconds);
+                return ResponseEntity.ok(respMap);
+
             } else {
-                String accessToken = map.get("access_token");
-                HttpHeaders userHeaders = new HttpHeaders();
-                userHeaders.add("Authorization", "token " +accessToken);
-                ResponseEntity<Map> respUser = restTemplate.exchange("https://api.github.com/user", HttpMethod.GET, httpEntity, Map.class);
-                if (respUser.getStatusCode() == HttpStatus.OK) {
-                    Map<String, String> userMap = respUser.getBody();
-                    String id = userMap.get("id");
-                    String login = userMap.get("login");
-                    String avatarUrl=  userMap.get("avatar_url");
-                    String name = userMap.get("name");
-                    //根据id查询 是否已经绑定过，   有则直接查询返回，  没有则提示
-
-
-                    String username =  jdbcTemplate.queryForObject("select username from users where github_id = ?", String.class,id );
-
-                    if (StringUtils.isBlank(username)) {
-                        return ResponseEntity.badRequest().body(userMap);
-                    }
-
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-
-                    return null;
-
-                } else {
-                    return respUser;
-                }
+                return respUser;
+            }
         }
     }
 

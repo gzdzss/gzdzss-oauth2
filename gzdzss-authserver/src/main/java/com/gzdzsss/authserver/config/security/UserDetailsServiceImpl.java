@@ -10,10 +10,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author <a href="mailto:zhouyanjie666666@gmail.com">zyj</a>
@@ -30,14 +29,43 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public GzdzssUserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> optionalUser = userRepository.findByUsername(username);
         if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            Set<GrantedAuthority> authorities = new HashSet<>();
-            for (Authorities auth: user.getAuthoritiesList()) {
-                GrantedAuthority grantedAuthority = new SimpleGrantedAuthority(auth.getAuthority());
-                authorities.add(grantedAuthority);
-            }
-            return new GzdzssUserDetails(user.getId(), user.getUsername(), user.getPassword(), user.getEnabled(), authorities);
+            return getDetails(optionalUser.get());
+        } else {
+            return null;
         }
-        return null;
     }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public GzdzssUserDetails loadUserByGithubId(String githubId, String githubToken, String avatarUrl, String nickName) {
+        Optional<User> optionalUser = userRepository.findByGithubId(githubId);
+        if (optionalUser.isPresent()) {
+            return getDetails(optionalUser.get());
+        } else {
+            User user  = new User();
+            user.setGithubId(githubId);
+            user.setEnabled(true);
+            user.setGithubToken(githubToken);
+            user.setAvatarUrl(avatarUrl);
+            user.setNickName(nickName);
+            List<Authorities> authorities = new ArrayList<>(1);
+            authorities.add(new Authorities("USER"));
+            user.setAuthoritiesList(authorities);
+            userRepository.save(user);
+            return getDetails(user);
+        }
+
+    }
+
+
+    private GzdzssUserDetails getDetails(User user) {
+        Set<GrantedAuthority> authorities = new HashSet<>();
+        for (Authorities auth : user.getAuthoritiesList()) {
+            GrantedAuthority grantedAuthority = new SimpleGrantedAuthority(auth.getAuthority());
+            authorities.add(grantedAuthority);
+        }
+        return new GzdzssUserDetails(user.getId(), user.getUsername(), user.getPassword(), user.getEnabled(), authorities, user.getAvatarUrl(), user.getNickName());
+    }
+
+
 }

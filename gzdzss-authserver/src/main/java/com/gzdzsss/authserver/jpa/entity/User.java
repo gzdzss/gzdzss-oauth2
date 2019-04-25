@@ -21,10 +21,15 @@ public class User extends AbstractEntity {
 
     private String password;
 
+    private String avatarUrl;
+
+    private String nickName;
+
     private Boolean enabled;
 
     private String githubId;
 
+    private String githubToken;
 
     @OneToMany(targetEntity = Authorities.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "userId")

@@ -19,6 +19,12 @@ public class GzdzssUserDetails implements UserDetails {
 
     @Getter
     private final Long id;
+    @Getter
+    @Setter
+    private String avatarUrl;
+    @Getter
+    @Setter
+    private String nickName;
     @Setter
     private String password;
     private final String username;
@@ -33,8 +39,18 @@ public class GzdzssUserDetails implements UserDetails {
         this.enabled = enabled;
         this.password = password;
         this.authorities = authorities;
-
     }
+
+    public GzdzssUserDetails(Long id, String username, String password, boolean enabled, Set<GrantedAuthority> authorities, String avatarUrl, String nickName) {
+        this.id = id;
+        this.username = username;
+        this.enabled = enabled;
+        this.password = password;
+        this.authorities = authorities;
+        this.avatarUrl = avatarUrl;
+        this.nickName = nickName;
+    }
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

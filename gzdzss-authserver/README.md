@@ -9,7 +9,11 @@ docker run --name redis  -p 6379:6379 -d  redis:5  --requirepass "gzdzssredispas
 
 ### 1.2 mysql
 docker run --name mysql -v  data:/var/lib/mysql   -p 3306:3306  -e MYSQL_ROOT_PASSWORD=123456 -d mysql:5.7
+
  
+
+
+
 
 
 ```sql
@@ -21,13 +25,18 @@ use authserver;
 CREATE TABLE `gzdzss_user` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `username` varchar(20) DEFAULT NULL,
-  `password` varchar(256) NOT NULL,
+  `password` varchar(256) DEFAULT NULL,
   `enabled` tinyint(1) NOT NULL,
+  `avatar_url` varchar(255) DEFAULT NULL COMMENT '头像地址',
+  `nick_name` varchar(255) DEFAULT NULL COMMENT '昵称',
   `github_id` varchar(255) DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL,
+  `modified_date` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_username` (`username`),
   UNIQUE KEY `uk_github_id` (`github_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+
 
 
 

@@ -6,6 +6,7 @@ import com.gzdzsss.authserver.jpa.repository.UserRepository;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,6 +34,10 @@ public class UserController {
     private PasswordEncoder passwordEncoder;
 
 
+    @RequestMapping(method = RequestMethod.GET, path = "/user")
+    public ResponseEntity test(Authentication authentication) {
+        return ResponseEntity.ok(authentication.getPrincipal());
+    }
 
 
     @RequestMapping(method = RequestMethod.POST, value = "/user/register")
@@ -47,6 +52,8 @@ public class UserController {
 
         User user  = new User();
         user.setUsername(username);
+        user.setNickName(username);
+        user.setAvatarUrl("https://cdn.gzdzss.cn/static/home/logo.png");
         user.setPassword(passwordEncoder.encode(password));
         user.setEnabled(true);
 
