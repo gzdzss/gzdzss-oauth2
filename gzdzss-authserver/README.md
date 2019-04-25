@@ -10,8 +10,6 @@ docker run --name redis  -p 6379:6379 -d  redis:5  --requirepass "gzdzssredispas
 ### 1.2 mysql
 docker run --name mysql -v  data:/var/lib/mysql   -p 3306:3306  -e MYSQL_ROOT_PASSWORD=123456 -d mysql:5.7
 
- 
-
 
 
 
@@ -57,28 +55,28 @@ CREATE TABLE `oauth_code` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 
-
 CREATE TABLE `oauth_client_details` (
   `client_id` varchar(256) NOT NULL,
   `resource_ids` varchar(256) DEFAULT NULL,
   `client_secret` varchar(256) NOT NULL,
-  `scope` varchar(256) DEFAULT NULL,
+  `scope` varchar(256) DEFAULT NULL COMMENT '可用范围 逗号分隔',
   `authorized_grant_types` varchar(256) DEFAULT NULL,
   `web_server_redirect_uri` varchar(256) DEFAULT NULL,
   `authorities` varchar(256) DEFAULT NULL,
   `access_token_validity` int(11) DEFAULT NULL COMMENT '默认有效期,默认:43200',
   `refresh_token_validity` int(11) DEFAULT NULL COMMENT '默认刷新有效期:2592000',
   `additional_information` varchar(4096) DEFAULT NULL,
-  `autoapprove` varchar(256) DEFAULT NULL,
+  `autoapprove` varchar(256) DEFAULT NULL COMMENT '自动审核的范围， 逗号分隔',
   `username` varchar(20) NOT NULL,
   PRIMARY KEY (`client_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
+
 ```
 
 
-### 1.3注册用户：
+### 1.3注册用户：  （或者通过前端页面进行操作  gzdzss-auth-web）
 POST: http://localhost:8888/auth/user/register   
   
   例： username:user

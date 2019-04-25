@@ -7,6 +7,7 @@ import com.gzdzsss.authserver.config.oauth.RedisJwtTokenStore;
 import com.gzdzsss.authserver.config.security.UserDetailsServiceImpl;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import org.springframework.security.oauth2.provider.*;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.endpoint.RedirectResolver;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,6 +38,7 @@ import java.util.*;
  * @author <a href="mailto:zhouyanjie666666@gmail.com">zyj</a>
  * @date 2019/4/19
  */
+@Slf4j
 @RestController
 public class Oauth2Controller {
 
@@ -63,7 +66,6 @@ public class Oauth2Controller {
     @Autowired
     private RedisJwtTokenStore redisJwtTokenStore;
 
-
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
 
@@ -75,8 +77,41 @@ public class Oauth2Controller {
     public ResponseEntity authorize(@RequestParam(value = OAuth2Utils.CLIENT_ID) String clientId,
                                     @RequestParam(value = OAuth2Utils.REDIRECT_URI) String redirectUri,
                                     @RequestParam(value = OAuth2Utils.RESPONSE_TYPE) String responseType,
+                                    @RequestParam(value = OAuth2Utils.SCOPE, required = false) String scope,
+                                    @RequestParam(value = OAuth2Utils.STATE, required = false) String state,
                                     Authentication authentication) {
-        AuthorizeVO authorizeVO = validate(authentication, responseType, clientId, redirectUri);
+        Set<String> scopes = new HashSet<>();
+        if (StringUtils.isNotBlank(scope)) {
+            scopes = new HashSet<>(Arrays.asList(scope.split(" ")));
+        }
+        AuthorizeVO authorizeVO = validate(authentication, responseType, state, clientId, scopes, redirectUri);
+        ClientDetails clientDetails = authorizeVO.getClientDetails();
+        //1. 如果全部都是自动 审核通过的 直接返回token
+
+        if (!CollectionUtils.isEmpty(scopes)) {
+            boolean approved = true;
+            for (String s : scopes) {
+                if (!clientDetails.isAutoApprove(s)) {
+                    approved = false;
+                }
+            }
+
+            if (approved) {
+                log.info("默认自动授权");
+                return getToken(authorizeVO, authentication);
+            }
+
+            //2. 通过   clientId, ,scope ,username 去redis获取有效的token
+            OAuth2Authentication combinedAuth = getOAuth2Authentication(authorizeVO, authentication);
+            OAuth2AccessToken accessToken = defaultTokenServices.getAccessToken(combinedAuth);
+            if (accessToken != null && !accessToken.isExpired()) {
+                log.info("近期存在授权过的token");
+                return getToken(authorizeVO, authentication);
+            }
+        }
+
+
+        log.info("手动授权");
         Map<String, Object> resp = new HashMap<>();
         resp.put(OAuth2Utils.CLIENT_ID, authorizeVO.getClientDetails().getClientId());
         resp.put(OAuth2Utils.RESPONSE_TYPE, responseType);
@@ -86,7 +121,19 @@ public class Oauth2Controller {
     }
 
 
-    private AuthorizeVO validate(Authentication authentication, String responseType, String clientId, String redirectUri) {
+    private OAuth2Authentication getOAuth2Authentication(AuthorizeVO authorizeVO, Authentication authentication) {
+        AuthorizationRequest request = new AuthorizationRequest();
+        request.setClientId(authorizeVO.getClientId());
+        request.setState(authorizeVO.getState());
+        request.setRedirectUri(authorizeVO.getResolvedRedirect());
+        request.setResponseTypes(OAuth2Utils.parseParameterList(authorizeVO.getResponseType()));
+        request.setScope(authorizeVO.getScope());
+        oAuth2RequestValidator.validateScope(request, authorizeVO.getClientDetails());
+        request.setResourceIdsAndAuthoritiesFromClientDetails(authorizeVO.getClientDetails());
+        return new OAuth2Authentication(request.createOAuth2Request(), authentication);
+    }
+
+    private AuthorizeVO validate(Authentication authentication, String responseType, String state, String clientId, Set<String> scope, String redirectUri) {
         if (!"token".equals(responseType) && !"code".equals(responseType)) {
             throw new UnsupportedResponseTypeException("Unsupported response types: " + responseType);
         }
@@ -97,7 +144,7 @@ public class Oauth2Controller {
             if (StringUtils.isBlank(resolvedRedirect)) {
                 throw new RedirectMismatchException("A redirectUri must be either supplied or preconfigured in the ClientDetails");
             }
-            return new AuthorizeVO(client, resolvedRedirect);
+            return new AuthorizeVO(clientId, state, scope, responseType, client, resolvedRedirect);
         } else {
             throw new InsufficientAuthenticationException("User must be authenticated with Spring Security before authorization can be completed.");
         }
@@ -111,21 +158,15 @@ public class Oauth2Controller {
                                      @RequestParam(value = OAuth2Utils.STATE, required = false) String state,
                                      @RequestParam(value = OAuth2Utils.SCOPE) Set<String> scope,
                                      Authentication authentication) {
-        AuthorizeVO authorizeVO = validate(authentication, responseType, clientId, redirectUri);
-        AuthorizationRequest request = new AuthorizationRequest();
-        request.setClientId(clientId);
-        request.setState(state);
-        request.setRedirectUri(redirectUri);
-        request.setResponseTypes(OAuth2Utils.parseParameterList(responseType));
-        request.setScope(scope);
-        oAuth2RequestValidator.validateScope(request, authorizeVO.getClientDetails());
+        AuthorizeVO authorizeVO = validate(authentication, responseType, state, clientId, scope, redirectUri);
+        return getToken(authorizeVO, authentication);
+    }
 
-        request.setResourceIdsAndAuthoritiesFromClientDetails(authorizeVO.getClientDetails());
-        OAuth2Authentication combinedAuth = new OAuth2Authentication(request.createOAuth2Request(), authentication);
 
+    private ResponseEntity getToken(AuthorizeVO authorizeVO, Authentication authentication) {
+        OAuth2Authentication combinedAuth = getOAuth2Authentication(authorizeVO, authentication);
         Map<String, Object> resp = new HashMap<>();
-
-        if ("token".equals(responseType)) {
+        if ("token".equals(authorizeVO.getResponseType())) {
             OAuth2AccessToken accessToken = defaultTokenServices.createAccessToken(combinedAuth);
             resp.put("access_token", accessToken.getValue());
             resp.put("token_type", accessToken.getTokenType());
@@ -136,13 +177,14 @@ public class Oauth2Controller {
                 resp.put("expires_in", expiresIn);
             }
             resp.put("scope", OAuth2Utils.formatParameterList(accessToken.getScope()));
-        } else if ("code".equals(responseType)) {
+        } else if ("code".equals(authorizeVO.getResponseType())) {
             String code = authorizationCodeServices.createAuthorizationCode(combinedAuth);
             resp.put("code", code);
         }
-        resp.put("response_type", responseType);
-        resp.put("redirect_uri", redirectUri);
-        resp.put("state", state);
+        resp.put("response_type", authorizeVO.getResponseType());
+        resp.put("redirect_uri", authorizeVO.getResolvedRedirect());
+        resp.put("state", authorizeVO.getState());
+        resp.put("approved", true);
         return ResponseEntity.ok(resp);
     }
 
@@ -194,6 +236,10 @@ public class Oauth2Controller {
     @AllArgsConstructor
     @Data
     protected class AuthorizeVO {
+        private String clientId;
+        private String state;
+        private Set<String> scope;
+        private String responseType;
         private ClientDetails clientDetails;
         private String resolvedRedirect;
     }

@@ -1,6 +1,7 @@
 package com.gzdzsss.authserver.web.controller;
 
 import com.gzdzsss.authserver.config.oauth.RedisJwtTokenStore;
+import com.gzdzsss.authserver.util.RespUtils;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -45,20 +46,9 @@ public class ClientController {
 
     @RequestMapping(value = "/client/online/{clientId}", method = RequestMethod.GET)
     public ResponseEntity onlines(@PathVariable String clientId) {
-
         Collection<OAuth2AccessToken> tokens = redisJwtTokenStore.findTokensByClientId(clientId);
-
-        for (OAuth2AccessToken token: tokens) {
-            System.out.println(token.getValue());
-        }
-
-
         return ResponseEntity.ok(tokens);
     }
-
-
-
-
 
 
     @RequestMapping(value = "/client/detail/{clientId}", method = RequestMethod.GET)
@@ -75,12 +65,12 @@ public class ClientController {
         int count = jdbcTemplate.queryForObject("SELECT count(1) FROM `oauth_client_details` where client_id = ?", int.class, clientId);
 
         if (count > 0) {
-            return ResponseEntity.badRequest().body("clientId: " + clientId + "已经被占用");
+            return RespUtils.respError("clientId: " + clientId + "已经被占用");
         }
         String scope = "login,userinfo";
-
+        String autoapprove = "login";
         String pwd = passwordEncoder.encode(clientSecret);
-        jdbcTemplate.update("insert into oauth_client_details (client_id,client_secret,web_server_redirect_uri,scope,authorized_grant_types,username) values(?,?,?,?,?,?)", clientId, pwd, callbackUrl, scope, "authorization_code,refresh_token,password,implicit,client_credentials", authentication.getName());
+        jdbcTemplate.update("insert into oauth_client_details (client_id,client_secret,web_server_redirect_uri,scope,authorized_grant_types,username,autoapprove) values(?,?,?,?,?,?,?)", clientId, pwd, callbackUrl, scope, "authorization_code,refresh_token,password,implicit,client_credentials", authentication.getName(), autoapprove);
         return ResponseEntity.ok().build();
     }
 

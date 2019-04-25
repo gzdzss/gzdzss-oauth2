@@ -30,9 +30,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         Optional<User> optionalUser = userRepository.findByUsername(username);
         if (optionalUser.isPresent()) {
             return getDetails(optionalUser.get());
-        } else {
-            return null;
         }
+        throw new UsernameNotFoundException("用户名不存在");
     }
 
 

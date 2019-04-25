@@ -3,6 +3,7 @@ package com.gzdzsss.authserver.web.controller;
 import com.gzdzsss.authserver.jpa.entity.Authorities;
 import com.gzdzsss.authserver.jpa.entity.User;
 import com.gzdzsss.authserver.jpa.repository.UserRepository;
+import com.gzdzsss.authserver.util.RespUtils;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +48,7 @@ public class UserController {
         Optional<User> optionalUser =  userRepository.findByUsername(username);
 
         if (optionalUser.isPresent()) {
-            return ResponseEntity.badRequest().body("用户名已存在");
+            return RespUtils.respError("用户名已存在");
         }
 
         User user  = new User();
