@@ -76,7 +76,7 @@
 
 
     <build>
-        <finalName>${project.parent.artifactId}</finalName>
+        <finalName>app</finalName>
 
         <plugins>
             <plugin>

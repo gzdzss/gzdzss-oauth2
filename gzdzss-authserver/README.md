@@ -28,13 +28,13 @@ CREATE TABLE `gzdzss_user` (
   `avatar_url` varchar(255) DEFAULT NULL COMMENT '头像地址',
   `nick_name` varchar(255) DEFAULT NULL COMMENT '昵称',
   `github_id` varchar(255) DEFAULT NULL,
+  `github_token` varchar(255) DEFAULT NULL,
   `created_date` datetime DEFAULT NULL,
   `modified_date` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_username` (`username`),
   UNIQUE KEY `uk_github_id` (`github_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
-
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 
 
@@ -42,10 +42,10 @@ CREATE TABLE `gzdzss_authorities` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) DEFAULT NULL,
   `authority` varchar(255) NOT NULL,
+  `modified_date` datetime DEFAULT NULL,
+  `created_date` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4;
-
-
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `oauth_code` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -54,6 +54,7 @@ CREATE TABLE `oauth_code` (
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+
 
 CREATE TABLE `oauth_client_details` (
   `client_id` varchar(256) NOT NULL,
@@ -70,6 +71,7 @@ CREATE TABLE `oauth_client_details` (
   `username` varchar(20) NOT NULL,
   PRIMARY KEY (`client_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 
 
