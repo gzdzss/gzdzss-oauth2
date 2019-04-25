@@ -3,9 +3,10 @@ package com.gzdzsss.authserver.config.security;
 import com.alibaba.fastjson.JSONObject;
 import com.gzdzss.security.util.GzdzssSecurityUtils;
 import com.gzdzsss.authserver.config.jwt.JwtAuthenticationFilter;
-import com.gzdzsss.authserver.config.jwt.JwtConstant;
 import com.gzdzsss.authserver.config.jwt.JwtUtils;
+import com.gzdzsss.authserver.config.oauth.RedisJwtTokenStore;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -47,6 +48,7 @@ import java.util.UUID;
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -57,22 +59,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private UserDetailsService userDetailsService;
 
     @Value("${jwt.authExpiresInSeconds}")
-    private long authExpiresInSeconds;
-
-    @Autowired
-    private RedisConnectionFactory connectionFactory;
+    private int authExpiresInSeconds;
 
     @Autowired
     private DefaultTokenServices defaultTokenServices;
 
     @Autowired
-    private RedisTokenStoreSerializationStrategy serializationStrategy;
+    private RedisJwtTokenStore redisJwtTokenStore;
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
     }
-
 
     //将认证服务加载到容器， 供 oauth2 的密码模式使用
     @Bean
@@ -88,15 +86,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         //禁用session
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.addFilter(new JwtAuthenticationFilter(authenticationManagerBean(), macSigner));
-        http.authorizeRequests().antMatchers("/user/register", "/oauth2/github","/testLogin").permitAll().anyRequest().authenticated().and().logout().logoutSuccessHandler(new LogoutSuccessHandler() {
+        http.authorizeRequests().antMatchers("/user/register", "/oauth2/github", "/testLogin").permitAll().anyRequest().authenticated().and().logout().logoutSuccessHandler(new LogoutSuccessHandler() {
             @Override
             public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-
-
                 Authentication jwtAuthentication = JwtUtils.decodeToken(request, macSigner);
-                if (jwtAuthentication != null) {
-                    //TODO
-                    log.info("注销。。。todo");
+                String accessToken = JwtUtils.getAccessToken(request);
+                if (jwtAuthentication != null && StringUtils.isNotBlank(accessToken)) {
+                    String clintId = JwtUtils.getClientId(request, macSigner);
+                    if (StringUtils.isNotBlank(clintId)) {
+                        defaultTokenServices.revokeToken(accessToken);
+                    } else {
+                        redisJwtTokenStore.removeJwtToken(accessToken);
+                    }
                 }
             }
         }).and().formLogin()
@@ -113,7 +114,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
                 String accessToken = UUID.randomUUID().toString();
                 String jwtToken = GzdzssSecurityUtils.encodeToken(authentication, authExpiresInSeconds, macSigner);
-                storeJwtToken(accessToken, jwtToken);
+                redisJwtTokenStore.storeJwtToken(accessToken, jwtToken, authExpiresInSeconds);
                 JSONObject respJson = new JSONObject();
                 respJson.put("access_token", accessToken);
                 respJson.put("token_type", "bearer");
@@ -147,21 +148,5 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         response.getWriter().flush();
     }
 
-    private void storeJwtToken(String accessToken, String jwtToken) {
-        byte[] key = serializeJwtKey(accessToken);
-        byte[] val = serializationStrategy.serialize(jwtToken);
-        connectionFactory.getConnection().set(key, val);
-        connectionFactory.getConnection().expire(key, authExpiresInSeconds);
-    }
-
-
-    private void removeAccessToken(String accessToken) {
-        byte[] key = serializeJwtKey(accessToken);
-        connectionFactory.getConnection().del(key);
-    }
-
-    private byte[] serializeJwtKey(String tokenValue) {
-        return serializationStrategy.serialize(JwtConstant.JWT_TO_ACCESS + tokenValue);
-    }
 
 }

@@ -1,14 +1,18 @@
 package com.gzdzsss.authserver.web.controller;
 
+import com.gzdzsss.authserver.config.oauth.RedisJwtTokenStore;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +30,12 @@ public class ClientController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private DefaultTokenServices defaultTokenServices;
+
+    @Autowired
+    private RedisJwtTokenStore redisJwtTokenStore;
+
     @RequestMapping(value = "/client/list", method = RequestMethod.GET)
     public ResponseEntity list(Authentication authentication) {
         List<String> clientIds = jdbcTemplate.queryForList("SELECT client_id FROM `oauth_client_details` where username = ?", String.class, authentication.getName());
@@ -33,8 +43,26 @@ public class ClientController {
     }
 
 
+    @RequestMapping(value = "/client/online/{clientId}", method = RequestMethod.GET)
+    public ResponseEntity onlines(@PathVariable String clientId) {
+
+        Collection<OAuth2AccessToken> tokens = redisJwtTokenStore.findTokensByClientId(clientId);
+
+        for (OAuth2AccessToken token: tokens) {
+            System.out.println(token.getValue());
+        }
+
+
+        return ResponseEntity.ok(tokens);
+    }
+
+
+
+
+
+
     @RequestMapping(value = "/client/detail/{clientId}", method = RequestMethod.GET)
-    public ResponseEntity clients(@PathVariable String clientId, Authentication authentication) {
+    public ResponseEntity detail(@PathVariable String clientId, Authentication authentication) {
         List<Map<String, Object>> clientDetails = jdbcTemplate.queryForList("select  client_id ,  web_server_redirect_uri from oauth_client_details  where client_id = ? and username = ?", clientId, authentication.getName());
         return ResponseEntity.ok(clientDetails);
     }

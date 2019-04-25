@@ -182,7 +182,6 @@ public class Oauth2Controller {
                     return respUser;
                 }
         }
-
     }
 
 

@@ -62,25 +62,28 @@ public class RedisJwtTokenStore extends RedisTokenStore {
 
 
     private void storeJwtToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
-        byte[] key = serializeJwtKey(token.getValue());
-
         GzdzssAccessTokenConverter converter = new GzdzssAccessTokenConverter();
         Map<String, ?> map = converter.convertAccessToken(token, authentication);
-
         String jwtToken = GzdzssSecurityUtils.encodeToken(map, macSigner);
-
-        byte[] val = serializationStrategy.serialize(jwtToken);
-
-        connectionFactory.getConnection().set(key, val);
-
+        Integer seconds = null;
         if (token.getExpiration() != null) {
-            int seconds = token.getExpiresIn();
-            connectionFactory.getConnection().expire(key, seconds);
+            seconds = token.getExpiresIn();
+        }
+        storeJwtToken(token.getValue(), jwtToken, seconds);
+    }
+
+
+    public void storeJwtToken(String token, String jwtToken, Integer expiresIn) {
+        byte[] key = serializeJwtKey(token);
+        byte[] val = serializationStrategy.serialize(jwtToken);
+        connectionFactory.getConnection().set(key, val);
+        if (expiresIn != null) {
+            connectionFactory.getConnection().expire(key, expiresIn);
         }
     }
 
 
-    private void removeJwtToken(String tokenValue) {
+    public void removeJwtToken(String tokenValue) {
         byte[] key = serializeJwtKey(tokenValue);
         connectionFactory.getConnection().del(key);
     }

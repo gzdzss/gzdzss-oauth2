@@ -26,6 +26,7 @@ import reactor.core.publisher.Mono;
 public class AuthFilter implements GlobalFilter, Ordered {
 
     private static final String JWT_TO_ACCESS = "jwt_to_access:";
+    private static final String HEADER_ACCESS_TOKEN = "accessToken";
 
 
     @Autowired
@@ -43,6 +44,7 @@ public class AuthFilter implements GlobalFilter, Ordered {
             if (jwtToken != null) {
                 ServerHttpRequest host = exchange.getRequest().mutate().headers(httpHeaders -> {
                     httpHeaders.setBearerAuth(jwtToken);
+                    httpHeaders.add(HEADER_ACCESS_TOKEN, accessToken);
                 }).build();
                 ServerWebExchange build = exchange.mutate().request(host).build();
                 return chain.filter(build);
