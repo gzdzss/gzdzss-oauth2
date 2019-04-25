@@ -1,12 +1,14 @@
 package com.gzdzss.order.web.contoller;
 
 import com.gzdzss.order.api.StorageApi;
+import com.gzdzss.security.util.GzdzssSecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,8 +30,10 @@ public class OrderController {
     @Autowired
     private StorageApi storageApi;
 
+    @PreAuthorize("hasAuthority('USER')")
     @GetMapping(value = "/order/test")
     public ResponseEntity test(OAuth2Authentication oAuth2Authentication) {
+        log.info("user:{}", GzdzssSecurityUtils.getUser());
         return ResponseEntity.ok().body(oAuth2Authentication.getOAuth2Request().getScope());
     }
 

@@ -42,16 +42,17 @@ public class ClientController {
 
     @RequestMapping(value = "/client/register", method = RequestMethod.POST)
     public ResponseEntity register(Authentication authentication, @RequestParam(value = "clientId") @Length(min = 4, max = 20) String clientId,
-                                   @RequestParam(value = "clientSecret") @Length(min = 6, max = 20) String clientSecret, @RequestParam(value = "callbackUrl") String callbackUrl) {
+                                   @RequestParam(value = "clientSecret") @Length(min = 5, max = 20) String clientSecret, @RequestParam(value = "callbackUrl") String callbackUrl) {
 
         int count = jdbcTemplate.queryForObject("SELECT count(1) FROM `oauth_client_details` where client_id = ?", int.class, clientId);
 
         if (count > 0) {
             return ResponseEntity.badRequest().body("clientId: " + clientId + "已经被占用");
         }
+        String scope = "login,userinfo";
 
         String pwd = passwordEncoder.encode(clientSecret);
-        jdbcTemplate.update("insert into oauth_client_details (client_id,client_secret,web_server_redirect_uri,scope,authorized_grant_types,username) values(?,?,?,?,?,?)", clientId, pwd, callbackUrl, "login,userinfo", "authorization_code,refresh_token,password,implicit,client_credentials", authentication.getName());
+        jdbcTemplate.update("insert into oauth_client_details (client_id,client_secret,web_server_redirect_uri,scope,authorized_grant_types,username) values(?,?,?,?,?,?)", clientId, pwd, callbackUrl, scope, "authorization_code,refresh_token,password,implicit,client_credentials", authentication.getName());
         return ResponseEntity.ok().build();
     }
 

@@ -1,5 +1,6 @@
 package com.gzdzss.order.config;
 
+import com.gzdzss.security.GzdzssAccessTokenConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,8 @@ public class OAuth2ResourceServer extends ResourceServerConfigurerAdapter {
     @Override
     public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
         JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+        GzdzssAccessTokenConverter gzdzssAccessTokenConverter = new GzdzssAccessTokenConverter();
+        converter.setAccessTokenConverter(gzdzssAccessTokenConverter);
         converter.setVerifier(new MacSigner(signingKey));
         resources.tokenStore(new JwtTokenStore(converter));
     }

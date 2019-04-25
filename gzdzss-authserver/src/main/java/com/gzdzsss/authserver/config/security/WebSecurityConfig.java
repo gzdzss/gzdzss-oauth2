@@ -1,11 +1,11 @@
-package com.gzdzsss.authserver.config;
+package com.gzdzsss.authserver.config.security;
 
 import com.alibaba.fastjson.JSONObject;
-import com.gzdzsss.authserver.config.jwt.JwtAuthentication;
+import com.gzdzss.security.util.GzdzssSecurityUtils;
 import com.gzdzsss.authserver.config.jwt.JwtAuthenticationFilter;
 import com.gzdzsss.authserver.config.jwt.JwtConstant;
 import com.gzdzsss.authserver.config.jwt.JwtUtils;
-import org.apache.commons.lang.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,11 +20,11 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.jwt.crypto.sign.SignerVerifier;
+import org.springframework.security.jwt.crypto.sign.MacSigner;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStoreSerializationStrategy;
-import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -43,6 +43,7 @@ import java.util.UUID;
  */
 
 
+@Slf4j
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
@@ -50,10 +51,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private SignerVerifier signerVerifier;
+    private MacSigner macSigner;
 
     @Autowired
-    private UserDetailsManager userDetailsManager;
+    private UserDetailsService userDetailsService;
 
     @Value("${jwt.authExpiresInSeconds}")
     private long authExpiresInSeconds;
@@ -69,7 +70,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsManager).passwordEncoder(passwordEncoder);
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
     }
 
 
@@ -86,22 +87,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable();
         //禁用session
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-        http.addFilter(new JwtAuthenticationFilter(authenticationManagerBean(), signerVerifier));
-        http.authorizeRequests().antMatchers("/user/register").permitAll().anyRequest().authenticated().and().logout().logoutSuccessHandler(new LogoutSuccessHandler() {
+        http.addFilter(new JwtAuthenticationFilter(authenticationManagerBean(), macSigner));
+        http.authorizeRequests().antMatchers("/user/register", "/oauth2/github","/testLogin").permitAll().anyRequest().authenticated().and().logout().logoutSuccessHandler(new LogoutSuccessHandler() {
             @Override
             public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-                JwtAuthentication jwtAuthentication = JwtUtils.decodeToken(request, signerVerifier);
+
+
+                Authentication jwtAuthentication = JwtUtils.decodeToken(request, macSigner);
                 if (jwtAuthentication != null) {
-                    String accessToken = jwtAuthentication.getAccessToken();
-                    String clientId = jwtAuthentication.getClientId();
-                    if (StringUtils.isNotBlank(accessToken)) {
-                        //有 client 表示为 oauth2登录
-                        if (StringUtils.isNotBlank(clientId)) {
-                            defaultTokenServices.revokeToken(accessToken);
-                        } else {
-                            removeAccessToken(accessToken);
-                        }
-                    }
+                    //TODO
+                    log.info("注销。。。todo");
                 }
             }
         }).and().formLogin()
@@ -117,7 +112,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             @Override
             public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
                 String accessToken = UUID.randomUUID().toString();
-                String jwtToken = JwtUtils.encodeToken(accessToken, authentication, signerVerifier);
+                String jwtToken = GzdzssSecurityUtils.encodeToken(authentication, authExpiresInSeconds, macSigner);
                 storeJwtToken(accessToken, jwtToken);
                 JSONObject respJson = new JSONObject();
                 respJson.put("access_token", accessToken);
@@ -128,7 +123,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         }).and().exceptionHandling().accessDeniedHandler(new AccessDeniedHandler() {
             @Override
             public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
-                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                response.setStatus(HttpStatus.FORBIDDEN.value());
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("error_description", accessDeniedException.getMessage());
                 writeResp(response, jsonObject);
@@ -136,7 +131,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         }).authenticationEntryPoint(new AuthenticationEntryPoint() {
             @Override
             public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-                response.setStatus(HttpStatus.FORBIDDEN.value());
+                response.setStatus(HttpStatus.UNAUTHORIZED.value());
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("error_description", authException.getMessage());
                 writeResp(response, jsonObject);

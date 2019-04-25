@@ -1,15 +1,13 @@
-package com.gzdzsss.authserver.config;
+package com.gzdzsss.authserver.config.oauth;
 
-import com.alibaba.fastjson.JSON;
+import com.gzdzss.security.GzdzssAccessTokenConverter;
+import com.gzdzss.security.util.GzdzssSecurityUtils;
 import com.gzdzsss.authserver.config.jwt.JwtConstant;
-import com.gzdzsss.authserver.config.jwt.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.security.jwt.JwtHelper;
-import org.springframework.security.jwt.crypto.sign.Signer;
+import org.springframework.security.jwt.crypto.sign.MacSigner;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
-import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStoreSerializationStrategy;
 import org.springframework.stereotype.Component;
@@ -30,17 +28,14 @@ public class RedisJwtTokenStore extends RedisTokenStore {
 
     private RedisTokenStoreSerializationStrategy serializationStrategy;
 
-    private JwtAccessTokenConverter jwtAccessTokenConverter;
-
-    private Signer signer;
+    private MacSigner macSigner;
 
     @Autowired
-    public RedisJwtTokenStore(RedisConnectionFactory connectionFactory, RedisConnectionFactory connectionFactory1, RedisTokenStoreSerializationStrategy serializationStrategy, Signer signer,JwtAccessTokenConverter jwtAccessTokenConverter) {
+    public RedisJwtTokenStore(RedisConnectionFactory connectionFactory, RedisConnectionFactory connectionFactory1, RedisTokenStoreSerializationStrategy serializationStrategy, MacSigner macSigner) {
         super(connectionFactory);
         this.connectionFactory = connectionFactory1;
         this.serializationStrategy = serializationStrategy;
-        this.signer = signer;
-        this.jwtAccessTokenConverter = jwtAccessTokenConverter;
+        this.macSigner = macSigner;
     }
 
 
@@ -69,12 +64,10 @@ public class RedisJwtTokenStore extends RedisTokenStore {
     private void storeJwtToken(OAuth2AccessToken token, OAuth2Authentication authentication) {
         byte[] key = serializeJwtKey(token.getValue());
 
-        Map<String, ?> convertAccessToken = jwtAccessTokenConverter.convertAccessToken(token, authentication);
+        GzdzssAccessTokenConverter converter = new GzdzssAccessTokenConverter();
+        Map<String, ?> map = converter.convertAccessToken(token, authentication);
 
-        Map<String, Object> map = (Map<String, Object>) convertAccessToken;
-        map.put(JwtUtils.ACCESS_TOKEN, token.getValue());
-
-        String jwtToken = JwtHelper.encode(JSON.toJSONString(map), signer).getEncoded();
+        String jwtToken = GzdzssSecurityUtils.encodeToken(map, macSigner);
 
         byte[] val = serializationStrategy.serialize(jwtToken);
 
