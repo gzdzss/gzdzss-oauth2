@@ -8,7 +8,7 @@ docker run --name redis  -p 6379:6379 -d  redis:5  --requirepass "gzdzssredispas
 
 
 ### 1.2 mysql
-docker run --name mysql -v  data:/var/lib/mysql   -p 3306:3306  -e MYSQL_ROOT_PASSWORD=123456 -d mysql:5.7
+docker run --name mysql -v  data:/var/lib/mysql   -p 3306:3306  -e MYSQL_ROOT_PASSWORD=gzdzss -d mysql:5.7
 
 
 

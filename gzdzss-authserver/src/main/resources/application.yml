@@ -29,6 +29,9 @@ jwt:
   ##auth token有效期
   authExpiresInSeconds: 43200
 
+github:
+  clientId: 9c526a5818a44c4c8be4
+  clientSecret: c9d795eb9e1d913aca6ed6d1ed6a54c8e7f9f8ec
 
 eureka:
   client:

@@ -72,6 +72,11 @@ public class Oauth2Controller {
     @Value("${jwt.authExpiresInSeconds}")
     private int authExpiresInSeconds;
 
+    @Value("${github.clientId}")
+    private String githubClientId;
+
+    @Value("${github.clientSecret}")
+    private String githubClientSecret;
 
     @RequestMapping(value = "/oauth2/authorize", method = RequestMethod.GET)
     public ResponseEntity authorize(@RequestParam(value = OAuth2Utils.CLIENT_ID) String clientId,
@@ -192,9 +197,7 @@ public class Oauth2Controller {
     @RequestMapping(value = "/oauth2/github", method = RequestMethod.GET)
     public ResponseEntity github(@RequestParam(value = "code") String code) {
         RestTemplate restTemplate = new RestTemplate();
-        String user = "3454267794e0ec293968";
-        String password = "f038263d3e2a199c0c639008b8629a8ae9a5fe82";
-        String userMsg = user + ":" + password;
+        String userMsg = githubClientId + ":" + githubClientSecret;
         String base64UserMsg = Base64.encodeBase64String(userMsg.getBytes());
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Basic " + base64UserMsg);
@@ -225,7 +228,6 @@ public class Oauth2Controller {
                 respMap.put("token_type", "bearer");
                 respMap.put("expires_in", authExpiresInSeconds);
                 return ResponseEntity.ok(respMap);
-
             } else {
                 return respUser;
             }
